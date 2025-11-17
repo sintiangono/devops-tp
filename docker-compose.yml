@@ -1,0 +1,108 @@
+version: "3.9"
+
+services:
+  # === Site Statique ===
+  static-site:
+    build: ./static-site
+    container_name: static-site
+    ports:
+      - "8080:80"
+    restart: always
+
+  # === Flask App ===
+  flask-app:
+    build: ./flask-app
+    container_name: flask-app
+    ports:
+      - "8085:5000"
+    restart: always
+
+  # === WordPress ===
+  wp-db:
+    image: mysql:8.0
+    container_name: wp-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+      MYSQL_ROOT_PASSWORD: rootpassword
+    volumes:
+      - wp_db_data:/var/lib/mysql
+
+  wordpress:
+    image: wordpress:latest
+    container_name: wordpress
+    depends_on:
+      - wp-db
+    ports:
+      - "8092:80"
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: wp-db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - wp_data:/var/www/html
+
+  # === Odoo (3 instances) ===
+  odoo-db:
+    image: postgres:16
+    container_name: odoo-db
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=odoo
+      - POSTGRES_PASSWORD=odoo
+    volumes:
+      - odoo_db_data:/var/lib/postgresql/data
+    restart: always
+
+  odoo1:
+    image: odoo:18
+    container_name: odoo1
+    depends_on:
+      - odoo-db
+    ports:
+      - "8075:8069"
+    environment:
+      - HOST=odoo-db
+      - USER=odoo
+      - PASSWORD=odoo
+    volumes:
+      - odoo1_data:/var/lib/odoo
+    restart: always
+
+  odoo2:
+    image: odoo:18
+    container_name: odoo2
+    depends_on:
+      - odoo-db
+    environment:
+      - HOST=odoo-db
+      - USER=odoo
+      - PASSWORD=odoo
+    volumes:
+      - odoo2_data:/var/lib/odoo
+    restart: always
+
+  odoo3:
+    image: odoo:18
+    container_name: odoo3
+    depends_on:
+      - odoo-db
+    environment:
+      - HOST=odoo-db
+      - USER=odoo
+      - PASSWORD=odoo
+    volumes:
+      - odoo3_data:/var/lib/odoo
+    restart: always
+
+volumes:
+  wp_db_data:
+  wp_data:
+  odoo_db_data:
+  odoo1_data:
+  odoo2_data:
+  odoo3_data:
